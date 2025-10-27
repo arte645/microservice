@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, List
-from .ISpecification import ISpecification
 
 T = TypeVar("T")
 ID = TypeVar("ID")
@@ -25,5 +24,5 @@ class IRepository(ABC, Generic[T, ID]):
     def update(self, id_: ID, data: dict) -> None: ...
     
     @abstractmethod
-    def filter_by_spec(self, spec: ISpecification[T]) -> List[T]: ...
+    def filter_by_spec(self, spec: bool) -> List[T]: ...
     

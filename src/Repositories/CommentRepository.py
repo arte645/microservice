@@ -1,7 +1,6 @@
 from typing import TypeVar, Generic, List, Optional
 from sqlalchemy.orm import Session
 from src.interfaces.IRepository import IRepository
-from src.interfaces.ISpecification import ISpecification
 from src.models.CommentModel import Comment
 
 T = TypeVar("T")
@@ -15,9 +14,9 @@ class CommentRepository(IRepository[T, ID], Generic[T, ID]):
         """Получить пользователя по ID"""
         return self.session.query(Comment).filter(Comment.comment_id == id_).first()
 
-    def list(self) -> List[T]:
+    def list(self, page: int = 0, per_page: int = None) -> List[T]:
         """Получить всех пользователей"""
-        return self.session.query(Comment).all()
+        return self.session.query(Comment).offset(page*per_page).limit(per_page).all()
 
     def add(self, entity: Comment) -> None:
         """Добавить нового пользователя"""
@@ -30,12 +29,11 @@ class CommentRepository(IRepository[T, ID], Generic[T, ID]):
         self.session.commit()
 
     def remove(self, entity: Comment) -> None:
-        """Удалить пользователя"""
+        """Удалить коммент"""
         self.session.delete(entity)
         self.session.commit()
 
-    def filter_by_spec(self, spec: ISpecification[T]) -> List[T]:
+    def filter_by_spec(self, spec: bool, page: int = None, per_page: int = None) -> List[T]:
         """Фильтрация по спецификации"""
-        all_users = self.list()
-        return [user for user in all_users if spec.is_satisfied_by(user)]
+        return self.session.query(Comment).filter(spec).offset(page*per_page).limit(per_page).all()
     

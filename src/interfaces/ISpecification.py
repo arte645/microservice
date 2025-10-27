@@ -1,54 +1,58 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, List
+from typing import TypeVar, Generic
+from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy import and_, or_, not_
+
 
 T = TypeVar("T")
 
 class ISpecification(ABC, Generic[T]):
     """
-    Класс для фильтрации данных после запров в бд. Для конструирования сложных запросов понадобятся
-    следующие логические операции: и(&), или (|), не(~)
+    Базовый класс для построения спецификаций SQLAlchemy.
+    Поддерживает логические операции: и(&), или(|), не(~)
     """
     @abstractmethod
-    def is_satisfied_by(self, entity: T) -> bool: ...
-     
+    def as_expression(self, entity_class: T) -> BinaryExpression:
+        """Возвращает SQLAlchemy выражение для фильтра"""
+        ...
+
     def __and__(self, other: 'ISpecification[T]') -> 'ISpecification[T]':
         return AndSpecification(self, other)
 
     def __or__(self, other: 'ISpecification[T]') -> 'ISpecification[T]':
-        return OrSpec(self, other)
+        return OrSpecification(self, other)
 
     def __invert__(self) -> 'ISpecification[T]':
-        return NotSpec(self)
-    
-    
+        return NotSpecification(self)
+
+
 class DirectSpecification(ISpecification):
-    def __init__(self, matchingCriteria: ISpecification):
-        self._matchingCriteria = matchingCriteria
-    
-    def is_satisfied_by(self, entity: T) -> bool:
-        return self._matchingCriteria(entity)
-    
-    
+    def __init__(self, expression_fn):
+        self.expression_fn = expression_fn
+
+    def as_expression(self, entity_class: T) -> BinaryExpression:
+        return self.expression_fn(entity_class)
+
+
 class AndSpecification(DirectSpecification):
     def __init__(self, *specs: ISpecification):
         self.specs = specs
 
-    def is_satisfied_by(self, entity: T) -> bool:
-        return all(spec.is_satisfied_by(entity) for spec in self.specs)
-    
-    
-class OrSpec(DirectSpecification):
-    def __init__(self, *specs: ISpecification[T]):
+    def as_expression(self, entity_class: T) -> BinaryExpression:
+        return and_(*(spec.as_expression(entity_class) for spec in self.specs))
+
+
+class OrSpecification(DirectSpecification):
+    def __init__(self, *specs: ISpecification):
         self.specs = specs
 
-    def is_satisfied_by(self, candidate: T) -> bool:
-        return any(spec.is_satisfied_by(candidate) for spec in self.specs)
+    def as_expression(self, entity_class: T) -> BinaryExpression:
+        return or_(*(spec.as_expression(entity_class) for spec in self.specs))
+    
 
-
-class NotSpec(DirectSpecification):
+class NotSpecification(DirectSpecification):
     def __init__(self, spec: ISpecification):
         self.spec = spec
 
-    def is_satisfied_by(self, candidate: T) -> bool:
-        return not self.spec.is_satisfied_by(candidate)
-    
+    def as_expression(self, entity_class: T) -> BinaryExpression:
+        return not_(self.spec.as_expression(entity_class))

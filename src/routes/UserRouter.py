@@ -1,25 +1,32 @@
 from fastapi import APIRouter, Depends
-from schemas.UserSchemas import *
-from controllers.AuthorizationController import security
+from src.schemas.UserSchemas import *
+from src.controllers.AuthorizationController import security
+from src.models.Database import get_db
+from src.controllers import UserController
 
 UserRouter = APIRouter()
 
-UserRouter.post("/users", tags=["users"])
-def register_user(user: CreateUserSchema):
-    pass
+@UserRouter.post("/users", tags=["users"])
+def register_user(user: CreateUserSchema, db = Depends(get_db)):
+    answer = UserController.register_user(user, db)
+    return answer
 
-UserRouter.get("/users/auth", tags=["users"])
-def authorize_user(user: CreateUserSchema):
-    pass
+@UserRouter.get("/users/auth", tags=["users"])
+def authorize_user(user: CreateUserSchema, db = Depends(get_db)):
+    answer = UserController.authorize_user(user, db)
+    return answer
 
-UserRouter.get("/user", tags=["users"])
-def get_users_info(token_data = Depends(security.access_token_required)):
-    pass
+@UserRouter.get("/user", tags=["users"])
+def get_users_info(token_data = Depends(security.access_token_required), db = Depends(get_db)):
+    answer = UserController.get_users_info(token_data.sub, db)
+    return answer
 
-UserRouter.put("/user/edit", tags=["users"])
-def update_users_info(updated_user: CreateUserSchema, token_data = Depends(security.access_token_required)):
-    pass
+@UserRouter.put("/user/edit", tags=["users"])
+def update_users_info(updated_user: CreateUserSchema, token_data = Depends(security.access_token_required), db = Depends(get_db)):
+    answer = UserController.update_users_info(updated_user, token_data.sub, db)
+    return answer
 
-UserRouter.patch("/user/delete", tags=["users"])
-def update_users_info(token_data = Depends(security.access_token_required)):
-    pass
+@UserRouter.patch("/user/delete", tags=["users"])
+def delete_user(token_data = Depends(security.access_token_required), db = Depends(get_db)):
+    answer = UserController.delete_user(token_data.sub, db)
+    return answer
