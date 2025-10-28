@@ -25,7 +25,8 @@ def add_article(article: CreateArticleSchema, token_data: str, db):
 
     ArticleRepository(db).add(new_article)
 
-    return {"status": "created"}
+    return {"status": "created",
+            "article_id": f"{article_id}"}
 
 def get_articles(db, page, per_page):
     articles = ArticleRepository(db).filter_by_spec(page=page, per_page=per_page, spec=ArticleSpecification.not_deleted())

@@ -19,7 +19,6 @@ def create_access_token(id: str):
     return security.create_access_token(id)
 
 def access_token_required(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
-    print(credentials)
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=401, detail="Missing or invalid token")
     token = credentials.credentials
