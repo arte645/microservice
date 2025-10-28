@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from src.schemas.CommentSchemas import *
 from src.controllers.AuthorizationController import security
 from src.models.Database import get_db
+from src.controllers import CommentController
 
 CommentRouter = APIRouter()
 

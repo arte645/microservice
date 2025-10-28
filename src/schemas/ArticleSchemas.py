@@ -7,4 +7,3 @@ class CreateArticleSchema(BaseModel):
    description: str = Field(str, min_length=6, max_length=250)
    body: str = Field(str, min_length=300)
    taglist: Optional[list] = Field(list)
-   user_id: str = Field(str)

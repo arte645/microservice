@@ -18,16 +18,16 @@ class UserRepository(IRepository[T, ID], Generic[T, ID]):
 
     def list(self, page: int = 0, per_page: int = None) -> List[T]:
         """Получить всех пользователей"""
-        return self.session.query(User).offset(page*per_page).limit(per_page).all()
+        return self.session.query(User).offset(page*(per_page or 0)).limit(per_page).all()
 
     def add(self, entity: User) -> None:
         """Добавить нового пользователя"""
         self.session.add(entity)
         self.session.commit()
 
-    def update(self, id_: ID, data: dict):
+    def update(self, data: dict):
         """Изменить поле пользователя"""
-        self.session.query(User).filter(User.user_id == id_).update(data)
+        self.session.query(User).filter(User.user_id == data["user_id"]).update(data)
         self.session.commit()
 
     def remove(self, entity: User) -> None:
