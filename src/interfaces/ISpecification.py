@@ -56,3 +56,4 @@ class NotSpecification(DirectSpecification):
 
     def as_expression(self, entity_class: T) -> BinaryExpression:
         return not_(self.spec.as_expression(entity_class))
+    

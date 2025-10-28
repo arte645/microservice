@@ -31,4 +31,3 @@ def update_article_data(updated_article: CreateArticleSchema, slug: str , token_
 def delete_article(slug: str, token_data=Depends(access_token_required), db = Depends(get_db)):
     answer = ArticleController.delete_article(db, slug, token_data)
     return answer
-

@@ -30,4 +30,3 @@ def access_token_required(credentials: HTTPAuthorizationCredentials = Security(b
         return user
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
-
