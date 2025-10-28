@@ -1,6 +1,5 @@
 from typing import Optional
 from pydantic import BaseModel, Field 
-from uuid import uuid4
 
 class CreateArticleSchema(BaseModel):
    title: str = Field(str, min_length=6, max_length=120)

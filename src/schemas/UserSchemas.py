@@ -1,6 +1,5 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field 
-from uuid import uuid4
 
 class CreateUserSchema(BaseModel):
    email: EmailStr = Field(EmailStr, min_length=6, max_length=50)

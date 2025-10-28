@@ -1,6 +1,5 @@
 from typing import TypeVar, Generic, List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from src.interfaces.IRepository import IRepository
 from src.interfaces.ISpecification import ISpecification
 from src.models.UserModel import User
