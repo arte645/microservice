@@ -1,3 +1,4 @@
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from src.schemas.ArticleSchemas import *
 from src.controllers.AuthorizationController import access_token_required
@@ -11,13 +12,13 @@ def add_article(article: CreateArticleSchema, token_data=Depends(access_token_re
     answer = ArticleController.add_article(article, token_data, db)
     return answer
 
-@ArticleRouter.get("/articles", tags=["articles"])
+@ArticleRouter.get("/articles", tags=["articles"], response_model=List[ArticleResponseSchema])
 def get_articles(db = Depends(get_db), page: int = Query(0, ge=0),
-                 per_page: int = Query(None, ge=None, le=100)):
+                 per_page: Optional[int] = Query(None, ge=0, le=100)):
     answer = ArticleController.get_articles(db, page, per_page)
     return answer
 
-@ArticleRouter.get("/articles/{slug}", tags=["articles"])
+@ArticleRouter.get("/articles/{slug}", tags=["articles"], response_model=ArticleResponseSchema)
 def get_article_by_slug(slug: str, db = Depends(get_db)):
     answer = ArticleController.get_article_by_slug(db, slug)
     return answer

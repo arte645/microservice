@@ -1,5 +1,5 @@
 from src.repositories.UserRepository import UserRepository
-from src.schemas.UserSchemas import CreateUserSchema
+from src.schemas.UserSchemas import *
 from .AuthorizationController import *
 from fastapi import HTTPException
 import uuid
@@ -27,7 +27,7 @@ def register_user(user: CreateUserSchema, db):
         username = user.username,
         password = user.password,
         sex = user.sex,
-        image_url = user.image_url,
+        image_url = str(user.image_url),
         is_deleted = False
     )
 
@@ -46,8 +46,13 @@ def authorize_user(user, db):
     
 
 def get_users_info(user_token, db):
-    return UserRepository(db).filter_by_spec(~UserSpecification.is_deleted() 
+    users_info = UserRepository(db).filter_by_spec(~UserSpecification.is_deleted() 
                                              & UserSpecification.id_is(user_token.sub))
+    
+    if not users_info:
+        raise HTTPException(status_code=404, detail="Пользователь не найден или удалён")
+
+    return UserResponseSchema.model_validate(users_info[0]).model_dump()
 
 def update_users_info(updated_user, user_token, db):
     user_id = user_token.sub

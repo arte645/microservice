@@ -16,7 +16,7 @@ def authorize_user(user: LoginUserSchema, db = Depends(get_db)):
     answer = UserController.authorize_user(user, db)
     return answer
 
-@UserRouter.get("/user", tags=["users"])
+@UserRouter.get("/user", tags=["users"], response_model = UserResponseSchema)
 def get_users_info(token_data=Depends(access_token_required), db = Depends(get_db)):
     answer = UserController.get_users_info(token_data, db)
     return answer

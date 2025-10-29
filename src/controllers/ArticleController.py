@@ -1,5 +1,5 @@
 from src.repositories.ArticleRepository import ArticleRepository
-from src.schemas.ArticleSchemas import CreateArticleSchema
+from src.schemas.ArticleSchemas import CreateArticleSchema, ArticleResponseSchema
 from .AuthorizationController import *
 from fastapi import HTTPException
 import uuid
@@ -34,13 +34,13 @@ def get_articles(db, page, per_page):
     if not articles:
         raise HTTPException(status_code=404, detail="Not found")
 
-    return articles
+    return [ArticleResponseSchema.model_validate(a).model_dump() for a in articles]
 
 def get_article_by_slug(db, slug):
     article = ArticleRepository(db).filter_by_spec(spec=ArticleSpecification.not_deleted() & ArticleSpecification.slug_is(slug=slug))
     if not article:
         raise HTTPException(status_code=404, detail="Not found")
-    return article
+    return ArticleResponseSchema.model_validate(article[0]).model_dump()
 
 def update_article_data(db, slug, updated_article, token_data):
     user_id = token_data.sub

@@ -1,6 +1,6 @@
 from src.repositories.CommentRepository import CommentRepository
 from src.repositories.ArticleRepository import ArticleRepository 
-from src.schemas.CommentSchemas import CreateCommentSchema
+from src.schemas.CommentSchemas import CreateCommentSchema, CommentResponseSchema
 from .AuthorizationController import *
 from fastapi import HTTPException
 import uuid
@@ -35,7 +35,7 @@ def get_comments(slug: str, db):
         raise HTTPException(status_code = 404, detail="Article not found")
     
     comments = CommentRepository(db).filter_by_spec(~CommentSpecification.comment_is_deleted())
-    return comments
+    return [CommentResponseSchema.model_validate(c).model_dump() for c in comments]
 
 def delete_comment(slug: str, id: str, token_data, db):
     if article_is_deleted(slug, db) or not user_is_author(token_data.sub, id, db):
