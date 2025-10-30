@@ -15,7 +15,7 @@ app.add_middleware(
 
 @app.get("/health", tags=["health"],
          summary="Проверить состояние сервиса", description="Возвращает статус работы сервиса.")
-def health():
+async def health():
     return {"status": "ok"}
 
 app.include_router(UserRouter)

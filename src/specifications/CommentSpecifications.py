@@ -10,3 +10,6 @@ class CommentSpecification:
     
     def comment_id_is(comment_id) -> ISpecification:
         return DirectSpecification(lambda Comment: Comment.comment_id == comment_id)
+
+    def article_is(article_id) -> ISpecification:
+        return DirectSpecification(lambda Comment: Comment.article_id == article_id)

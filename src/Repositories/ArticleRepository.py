@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic, List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update as sqlalchemy_update
 from src.interfaces.IRepository import IRepository
 from src.models.ArticleModel import Article
 from src.interfaces.ISpecification import ISpecification
@@ -7,33 +8,41 @@ from src.interfaces.ISpecification import ISpecification
 T = TypeVar("T")
 ID = TypeVar("ID")
 
+
 class ArticleRepository(IRepository[T, ID], Generic[T, ID]):
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def get_by_id(self, id_: ID) -> Optional[T]:
+    async def get_by_id(self, id_: ID) -> Optional[T]:
         """Получить статью по ID"""
-        return self.session.query(Article).filter(Article.article_id == id_).first()
+        return await self.session.get(Article, id_)
 
-    def list(self, page: int = 0, per_page: int = None) -> List[T]:
+    async def list(self, page: int = 0, per_page: int = None) -> List[T]:
         """Получить все статьи"""
-        return self.session.query(Article).offset(page*(per_page or 0)).limit(per_page).all()
+        q = select(Article).offset(page * (per_page or 0)).limit(per_page)
+        result = await self.session.execute(q)
+        return result.scalars().all()
 
-    def add(self, entity: Article) -> None:
+    async def add(self, entity: Article) -> None:
         """Добавить новую статью"""
         self.session.add(entity)
-        self.session.commit()
+        await self.session.commit()
+        await self.session.refresh(entity)
 
-    def update(self, data: dict):
+    async def update(self, data: dict):
         """Изменить поле статьи"""
-        self.session.query(Article).filter(Article.article_id == data["article_id"]).update(data)
-        self.session.commit()
+        await self.session.execute(
+            sqlalchemy_update(Article).where(Article.article_id == data["article_id"]).values(data)
+        )
+        await self.session.commit()
 
-    def remove(self, entity: Article) -> None:
+    async def remove(self, entity: Article) -> None:
         """Удалить статью"""
         self.session.delete(entity)
-        self.session.commit()
+        await self.session.commit()
 
-    def filter_by_spec(self, spec: ISpecification, page: int = 0, per_page: int = None) -> List[T]:
+    async def filter_by_spec(self, spec: ISpecification, page: int = 0, per_page: int = None) -> List[T]:
         """Фильтрация по спецификации"""
-        return self.session.query(Article).filter(spec.as_expression(Article)).offset(page*(per_page or 0)).limit(per_page).all()
+        q = select(Article).where(spec.as_expression(Article)).offset(page * (per_page or 0)).limit(per_page)
+        result = await self.session.execute(q)
+        return result.scalars().all()

@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic, List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update as sqlalchemy_update
 from src.interfaces.IRepository import IRepository
 from src.models.CommentModel import Comment
 from src.interfaces.ISpecification import ISpecification
@@ -7,34 +8,44 @@ from src.interfaces.ISpecification import ISpecification
 T = TypeVar("T")
 ID = TypeVar("ID")
 
+
 class CommentRepository(IRepository[T, ID], Generic[T, ID]):
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def get_by_id(self, id_: ID) -> Optional[T]:
-        """Получить пользователя по ID"""
-        return self.session.query(Comment).filter(Comment.comment_id == id_).first()
+    async def get_by_id(self, id_: ID) -> Optional[T]:
+        """Получить комментарий по ID"""
+        return await self.session.get(Comment, id_)
 
-    def list(self, page: int = 0, per_page: int = None) -> List[T]:
-        """Получить всех пользователей"""
-        return self.session.query(Comment).offset(page*(per_page or 0)).limit(per_page).all()
+    async def list(self, page: int = 0, per_page: int = None) -> List[T]:
+        """Получить всех комментарии"""
+        q = select(Comment)
+        if per_page is not None:
+            q = q.offset(page * (per_page or 0)).limit(per_page)
+        result = await self.session.execute(q)
+        return result.scalars().all()
 
-    def add(self, entity: Comment) -> None:
-        """Добавить нового пользователя"""
+    async def add(self, entity: Comment) -> None:
+        """Добавить новый комментарий"""
         self.session.add(entity)
-        self.session.commit()
-    
-    def update(self, data: dict):
+        await self.session.commit()
+        await self.session.refresh(entity)
+
+    async def update(self, data: dict):
         """Изменить текст комментария"""
-        self.session.query(Comment).filter(Comment.comment_id == data["comment_id"]).update(data)
-        self.session.commit()
+        await self.session.execute(
+            sqlalchemy_update(Comment).where(Comment.comment_id == data["comment_id"]).values(**data)
+        )
+        await self.session.commit()
 
-    def remove(self, entity: Comment) -> None:
-        """Удалить коммент"""
+    async def remove(self, entity: Comment) -> None:
+        """Удалить комментарий"""
         self.session.delete(entity)
-        self.session.commit()
+        await self.session.commit()
 
-    def filter_by_spec(self, spec: ISpecification, page: int = 0, per_page: int = None) -> List[T]:
+    async def filter_by_spec(self, spec: ISpecification, page: int = 0, per_page: int = None) -> List[T]:
         """Фильтрация по спецификации"""
-        return self.session.query(Comment).filter(spec.as_expression(Comment)).offset(page*(per_page or 0)).limit(per_page).all()
+        q = select(Comment).where(spec.as_expression(Comment)).offset(page * (per_page or 0)).limit(per_page)
+        result = await self.session.execute(q)
+        return result.scalars().all()
     
