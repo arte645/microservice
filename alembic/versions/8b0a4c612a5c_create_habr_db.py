@@ -1,8 +1,8 @@
 """create habr db
 
-Revision ID: 7b1a5f7ea933
-Revises: ff50a1561c91
-Create Date: 2025-10-27 16:01:53.079199
+Revision ID: 8b0a4c612a5c
+Revises: 
+Create Date: 2025-10-31 00:23:18.930713
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '7b1a5f7ea933'
-down_revision: Union[str, Sequence[str], None] = 'ff50a1561c91'
+revision: str = '8b0a4c612a5c'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

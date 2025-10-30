@@ -24,7 +24,6 @@ async def access_token_required(credentials: HTTPAuthorizationCredentials = Secu
         raise HTTPException(status_code=401, detail="Missing or invalid token")
     token = credentials.credentials
     try:
-        # AuthX appears to expose sync decode; run in threadpool to avoid blocking event loop
         user = await run_in_threadpool(security._decode_token, token)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid token")
