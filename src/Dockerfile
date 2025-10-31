@@ -8,8 +8,7 @@ RUN pip install poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-root
 
-COPY ./src /microservice/src
-COPY ./alembic /microservice/alembic
+COPY . /microservice
 
 ENV PYTHONPATH=/microservice
 
