@@ -4,12 +4,15 @@ WORKDIR /microservice
 
 COPY pyproject.toml /microservice/
 
-RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-root
+RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-root
 
-EXPOSE 8000
+COPY ./src /microservice/src
 
 ENV PYTHONPATH=/microservice
 
-COPY . /microservice/
+EXPOSE 8000
 
 CMD bash -c "poetry run alembic upgrade head && poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000"
+

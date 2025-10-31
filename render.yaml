@@ -2,20 +2,18 @@ services:
   - type: web
     name: backend
     env: docker
-    plan: free
     dockerfilePath: ./src/Dockerfile
+    plan: free
     autoDeploy: true
-    healthCheckPath: /health
     envVars:
-      - key: PYTHONPATH
-        value: /microservice
       - key: PORT
         value: 8000
       - key: DATABASE_URL
         fromDatabase:
           name: postgres-db
           property: connectionString
-
+      - key: PYTHONPATH
+        value: /microservice
 databases:
   - name: postgres-db
     plan: free
