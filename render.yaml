@@ -4,8 +4,6 @@ services:
     env: docker
     dockerfilePath: ./src/Dockerfile
     dockerContext: .
-    ports:
-      - 8000:8000
     plan: free
     autoDeploy: true
     envVars:
