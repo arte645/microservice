@@ -7,6 +7,8 @@ services:
     autoDeploy: true
     healthCheckPath: /health
     envVars:
+      - key: PYTHONPATH
+        value: /microservice
       - key: PORT
         value: 8000
       - key: DATABASE_URL
