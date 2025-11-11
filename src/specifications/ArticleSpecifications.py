@@ -6,8 +6,8 @@ class ArticleSpecification:
         return DirectSpecification(lambda Article: Article.user_id == user_id)
 
     @staticmethod
-    def slug_is(slug: str) -> ISpecification:
-        return DirectSpecification(lambda Article: Article.article_id == slug)
+    def article_id_is(article_id: str) -> ISpecification:
+        return DirectSpecification(lambda Article: Article.article_id == article_id)
     
     @staticmethod
     def not_deleted() -> ISpecification:

@@ -21,6 +21,7 @@ class UserResponseSchema(BaseModel):
    user_id: UUID
    email: EmailStr
    username: str
+   password: str
    sex: Optional[str] = None
    image_url: Optional[HttpUrl] = None
    is_deleted: bool = False
