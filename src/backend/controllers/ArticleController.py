@@ -9,6 +9,7 @@ from fastapi import HTTPException
 import uuid
 from ..models.ArticleModel import Article
 from ..specifications.ArticleSpecifications import ArticleSpecification
+from src.infrastructure.rabbitmq import publish_notification
 
 
 async def created_by_user(db: AsyncSession, article_id: str, user_id: str):
@@ -30,6 +31,12 @@ async def add_article(article: CreateArticleSchema, token_data: str, db: AsyncSe
     )
 
     await ArticleRepository(db).add(new_article)
+
+    await publish_notification({
+        "event": "ARTICLE_CREATED",
+        "article_id": str(article_id),
+        "author_id": token_data.sub
+    })
 
     return {"status": "created",
             "article_id": f"{article_id}"}

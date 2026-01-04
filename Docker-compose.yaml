@@ -7,6 +7,9 @@ services:
      - .:/microservice
     env_file:
       - .env
+    depends_on:
+      - backend_db
+      - rabbitmq
     healthcheck:
       test:
         [
@@ -55,21 +58,27 @@ services:
   # --- SWAGGER UI ---
   swagger_ui:
     image: swaggerapi/swagger-ui
-    container_name: swagger_ui
-    ports:
-      - "8081:8080"
     environment:
       URLS: >
         [
-          { "url": "http://localhost/api/users/openapi.json", "name": "Users Service" },
-          { "url": "http://localhost/openapi.json", "name": "Blog Service" }
+          { "url": "/api/users/openapi.json", "name": "Users Service" },
+          { "url": "/openapi.json", "name": "Blog Service" }
         ]
-      VALIDATOR_URL: none
-    depends_on:
-      - gateway
 
+  push-notificator:
+      image: ghcr.io/ayusavin/push-notification-playground:1.0.0
+      ports:
+        - "8000:8000"
+  worker: 
+    build:
+      context: .
+      dockerfile: ./src/worker/Dockerfile
+    volumes:
+     - .:/microservice
+    env_file:
+      - .env
+    depends_on: [rabbitmq, push-notificator, users_db]
 
-  
   backend_db:
     image: postgres:15
     container_name: backend_db
@@ -100,6 +109,21 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 30s
       timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
 volumes:

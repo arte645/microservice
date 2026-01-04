@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Text, Boolean
+from sqlalchemy import Column, Text, Boolean, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .BaseModel import Base
@@ -13,4 +13,5 @@ class User(Base):
     password = Column(Text, nullable=False)
     sex = Column(Text)
     image_url = Column(Text)
+    subscription_key = Column(Text, nullable=True)
     is_deleted = Column(Boolean, default=False)

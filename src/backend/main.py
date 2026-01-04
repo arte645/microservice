@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routes import *
 
 
-app = FastAPI(title="Blog API", docs_url=None, redoc_url=None,openapi_url="/openapi.json")
+app = FastAPI(title="Blog API", docs_url=None, redoc_url=None, openapi_url="/openapi.json")
 
 app.add_middleware(
     CORSMiddleware,

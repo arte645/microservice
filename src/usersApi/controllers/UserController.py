@@ -2,12 +2,15 @@ from types import CoroutineType
 from typing import Any
 from authx import TokenPayload
 from ..repositories.UserRepository import UserRepository
+from ..repositories.SubscriptionsRepository import SubscriptionRepository
 from ..schemas.UserSchemas import *
 from .AuthorizationController import *
 from fastapi import HTTPException
 import uuid
 from ..models.UserModel import User
+from ..models.SubscriptionsModel import Subscription
 from ..specifications.UserSpecifications import UserSpecification
+from ..specifications.SubscriptionSpecifications import SubscriptionSpecification
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -90,3 +93,51 @@ async def delete_user(user_token: CoroutineType[Any, Any, TokenPayload], db: Asy
     }
     await UserRepository(db).update(user)
     return {"status": "deleted"}
+
+async def subscribe_to_user(target_user_id: str, user_token: CoroutineType[Any, Any, TokenPayload], db: AsyncSession):
+    subscriber_user_id = user_token.sub
+
+    if subscriber_user_id == target_user_id:
+        raise HTTPException(status_code=400, detail="Нельзя подписаться на самого себя")
+
+    target_user = await UserRepository(db).filter_by_spec(~UserSpecification.is_deleted()
+                                                          & UserSpecification.id_is(target_user_id))
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Пользователь, на которого вы пытаетесь подписаться, не найден")
+    
+    existing_subscription = await SubscriptionRepository(db).filter_by_spec(
+        SubscriptionSpecification.subscriber_user_id_is(subscriber_user_id) &
+        SubscriptionSpecification.target_user_id_is(target_user_id))
+    
+    if existing_subscription:
+        return {"status": f"Already subscribed to user {target_user_id}"}
+    
+    await SubscriptionRepository(db).add(Subscription(
+        subscriber_user_id=subscriber_user_id,
+        target_user_id=target_user_id
+    ))
+    return {"status": f"Subscribed to user {target_user_id}"}
+
+async def subscription_key(subscription_key: str, user_token: CoroutineType[Any, Any, TokenPayload], db: AsyncSession):
+    user_id = user_token.sub
+
+    user = await UserRepository(db).filter_by_spec(~UserSpecification.is_deleted()
+                                                  & UserSpecification.id_is(user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден или удалён")
+
+    new_user = {
+        "user_id": user_id,
+        "subscription_key": subscription_key
+    }
+    await UserRepository(db).update(new_user)
+    return {"status": "subscription key updated"}
+
+async def get_all_users(db: AsyncSession):
+    all_users = await UserRepository(db).filter_by_spec(~UserSpecification.is_deleted())
+    return {"data": [UserListResponseSchema.model_validate(c).model_dump() for c in all_users]}
+
+async def get_all_my_subscriptions(user_token: CoroutineType[Any, Any, TokenPayload], db: AsyncSession):
+    user_id = user_token.sub
+    all_subs = await  SubscriptionRepository(db).filter_by_spec(SubscriptionSpecification.subscriber_user_id_is(user_id))
+    return {"data": [s.target_user_id for s in all_subs]}

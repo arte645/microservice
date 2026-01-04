@@ -27,3 +27,13 @@ class UserResponseSchema(BaseModel):
    is_deleted: bool = False
 
    model_config = ConfigDict(from_attributes=True)
+
+class UserListResponseSchema(BaseModel):
+   user_id: UUID
+   username: str
+   sex: Optional[str] = None
+   image_url: Optional[HttpUrl] = None
+   is_deleted: bool = False
+   subscription_key: Optional[str] = None
+
+   model_config = ConfigDict(from_attributes=True)
