@@ -139,5 +139,5 @@ async def get_all_users(db: AsyncSession):
 
 async def get_all_my_subscriptions(user_token: CoroutineType[Any, Any, TokenPayload], db: AsyncSession):
     user_id = user_token.sub
-    all_subs = await  SubscriptionRepository(db).filter_by_spec(SubscriptionSpecification.subscriber_user_id_is(user_id))
+    all_subs = await  SubscriptionRepository(db).filter_by_spec(SubscriptionSpecification.target_user_id_is(user_id))
     return {"data": [s.target_user_id for s in all_subs]}

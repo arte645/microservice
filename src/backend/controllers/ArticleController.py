@@ -10,11 +10,19 @@ import uuid
 from ..models.ArticleModel import Article
 from ..specifications.ArticleSpecifications import ArticleSpecification
 from src.infrastructure.rabbitmq import publish_notification
+from ..repositories.ApiKeysRepository import ApiKeysRepository
+from ..specifications.ApiKeySpecifications import ApiKeySpecification
 
 
 async def created_by_user(db: AsyncSession, article_id: str, user_id: str):
     results = await ArticleRepository(db).filter_by_spec(ArticleSpecification.created_by_user(user_id) &
                                        ArticleSpecification.article_id_is(article_id) & ArticleSpecification.not_deleted())
+    return len(results)
+
+async def status_is(db: AsyncSession, article_id: str, status):
+    results = await ArticleRepository(db).filter_by_spec(ArticleSpecification.article_id_is(article_id)
+                                                          & ArticleSpecification.not_deleted()
+                                                          & ArticleSpecification.status_is(status))
     return len(results)
 
 
@@ -31,13 +39,7 @@ async def add_article(article: CreateArticleSchema, token_data: str, db: AsyncSe
     )
 
     await ArticleRepository(db).add(new_article)
-
-    await publish_notification({
-        "event": "ARTICLE_CREATED",
-        "article_id": str(article_id),
-        "author_id": token_data.sub
-    })
-
+    
     return {"status": "created",
             "article_id": f"{article_id}"}
 
@@ -88,3 +90,42 @@ async def delete_article(db: AsyncSession, article_id: str, token_data: Coroutin
     }
     await ArticleRepository(db).update(user)
     return {"status": "deleted"}
+
+async def publish_article(db: AsyncSession, article_id: str, token_data: CoroutineType[Any, Any, TokenPayload]):
+    user_id = token_data.sub
+
+    if not await created_by_user(db, article_id, user_id):
+        raise HTTPException(status_code=403, detail="Forbidden or non-existent")
+    
+    if not await status_is(db, article_id, status="DRAFT"):
+        raise HTTPException(status_code=400, detail="Status isnt DRAFT")
+    
+    article = {
+        "article_id": article_id,
+        "status": "PENDING_PUBLISH"
+    }
+    await ArticleRepository(db).update(article)
+    api_key = await ApiKeysRepository(db).filter_by_spec(ApiKeySpecification.api_is(description="backend"))
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Api key for backend not found")
+    await publish_notification({
+        "event": "ARTICLE_MODERATE",
+        "article_id": str(article_id),
+        "author_id": user_id,
+        "requested_by": api_key[0].key
+    }, queue = "moderation")
+
+    return {"status": "article is pending publish"}
+
+async def reject_article(db: AsyncSession, article_id: str):  
+    article = {
+        "article_id": article_id,
+        "status": "REJECTED"
+    }
+    await ArticleRepository(db).update(article)
+
+    return {"status": "article is REJECTED"}
+
+async def get_api_keys(db: AsyncSession):
+    api_keys = await ApiKeysRepository(db).list()
+    return {"data": [{ "key": api_key.key, "description": api_key.description} for api_key in api_keys]}

@@ -5,22 +5,22 @@ import asyncio
 connection: aio_pika.RobustConnection | None = None
 channel: aio_pika.Channel | None = None
 
-async def get_channel() -> aio_pika.Channel:
+async def get_channel(queue: str) -> aio_pika.Channel:
     global connection, channel
     if channel and not channel.is_closed:
         return channel
     connection = await aio_pika.connect_robust("amqp://guest:guest@rabbitmq/")
     channel = await connection.channel()
-    await channel.declare_queue("notifications", durable=True)
+    await channel.declare_queue(queue, durable=True)
     return channel
 
-async def publish_notification(message: dict):
-    channel = await get_channel()
+async def publish_notification(message: dict, queue: str):
+    channel = await get_channel(queue)
     await channel.default_exchange.publish(
         aio_pika.Message(
             body=json.dumps(message).encode(),
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT
         ),
-        routing_key="notifications",
+        routing_key=queue,
         mandatory=True
     )

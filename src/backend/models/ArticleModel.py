@@ -15,5 +15,7 @@ class Article(Base):
     taglist = Column(ARRAY(String))
     user_id = Column(UUID(as_uuid=True))
     is_deleted = Column(Boolean, default=False)
+    status = Column(Text, default="DRAFT")
+    preview_url = Column(Text, nullable=True)
 
     comments = relationship("Comment", back_populates="article", cascade="all, delete-orphan")

@@ -12,3 +12,7 @@ class ArticleSpecification:
     @staticmethod
     def not_deleted() -> ISpecification:
         return DirectSpecification(lambda Article: Article.is_deleted == False)
+    
+    @staticmethod
+    def status_is(status: str) -> ISpecification:
+        return DirectSpecification(lambda Article: Article.status == status)

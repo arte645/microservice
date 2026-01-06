@@ -8,8 +8,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - backend_db
-      - rabbitmq
+      backend_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -28,6 +30,9 @@ services:
      - .:/microservice
     env_file:
       - .env
+    depends_on:
+      users_db:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -52,6 +57,10 @@ services:
     image: nginx:latest
     ports:
       - "80:80"
+    depends_on:
+      - usersapi
+      - backend
+      - swagger_ui
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 
@@ -78,6 +87,48 @@ services:
     env_file:
       - .env
     depends_on: [rabbitmq, push-notificator, users_db]
+
+  moderationworker: 
+    build:
+      context: .
+      dockerfile: ./src/moderationWorker/Dockerfile
+    volumes:
+    - .:/microservice
+    env_file:
+      - .env
+    depends_on:
+      backend_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  previewworker: 
+    build:
+      context: .
+      dockerfile: ./src/previewWorker/Dockerfile
+    volumes:
+    - .:/microservice
+    env_file:
+      - .env
+    depends_on:
+      backend_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  publishworker: 
+    build:
+      context: .
+      dockerfile: ./src/publishWorker/Dockerfile
+    volumes:
+    - .:/microservice
+    env_file:
+      - .env
+    depends_on:
+      backend_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   backend_db:
     image: postgres:15

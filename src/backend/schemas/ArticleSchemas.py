@@ -19,5 +19,6 @@ class ArticleResponseSchema(BaseModel):
    taglist: List[str] = Field(default_factory=list)
    user_id: Optional[UUID]
    is_deleted: bool = False
+   status: str
 
    model_config = ConfigDict(from_attributes=True)
